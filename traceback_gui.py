@@ -159,13 +159,17 @@ class TracebackPlusWindow(Toplevel):
     def show_traceback(self, exception=None):
         if exception is None:
             exception = sys.exc_info()[1]
-        self._show_traceback(exception)
+
+        additional_message = None
         if exception.__cause__ is not None:
-            self._show_traceback(exception.__cause__, "The above exception ({}) was the direct cause "
-                                                      "of the following exception:".format(_get_type(exception)))
-        if exception.__context__ is not None and not exception.__suppress_context__:
-            self._show_traceback(exception.__context__, "During handling of the above exception ({}), "
-                                                        "another exception occurred:".format(_get_type(exception)))
+            self.show_traceback(exception.__cause__)
+            additional_message = ("The above exception ({}) was the direct cause "
+                                  "of the following exception:".format(_get_type(exception.__cause__)))
+        elif exception.__context__ is not None and not exception.__suppress_context__:
+            self.show_traceback(exception.__context__)
+            additional_message = ("During handling of the above exception ({}), "
+                                  "another exception occurred:".format(_get_type(exception.__context__)))
+        self._show_traceback(exception, additional_message)
 
     def _show_traceback(self, exception: BaseException, additional_message=None):
         page = Page(self.notebook, _get_type(exception))
@@ -254,4 +258,3 @@ def excepthook(exc_type, exc_value, exc_tb):
 
 def set_hook():
     sys.excepthook = excepthook
-
